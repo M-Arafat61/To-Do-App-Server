@@ -11,7 +11,11 @@ const port = process.env.PORT || 5000;
 // middleware
 app.use(
   cors({
-    origin: ["http://localhost:5173"],
+    origin: [
+      "https://task-management-9ebf5.web.app/",
+      "https://task-management-9ebf5.firebaseapp.com/",
+      // "http://localhost:5173"
+    ],
     credentials: true,
   })
 );
@@ -30,7 +34,7 @@ const client = new MongoClient(uri, {
 
 async function run() {
   try {
-    await client.connect();
+    // await client.connect();
 
     const userCollection = client.db("Task-Management").collection("users");
     const taskCollection = client.db("Task-Management").collection("tasks");
@@ -45,6 +49,8 @@ async function run() {
           httpOnly: true,
           secure: true,
           sameSite: "none",
+          // secure: false,
+          // sameSite: "strict",
         })
         .send({ success: true });
     });
@@ -92,6 +98,25 @@ async function run() {
       const updateDoc = {
         $set: {
           status: updatedTask.status,
+        },
+      };
+
+      const result = await taskCollection.updateOne(filter, updateDoc, options);
+      res.send(result);
+    });
+    app.patch("/updateTasks/:taskId", async (req, res) => {
+      const id = req.params.taskId;
+      const filter = { _id: new ObjectId(id) };
+      const options = { upsert: true };
+      const updatedTask = req.body;
+      const updateDoc = {
+        $set: {
+          title: updatedTask.title,
+          description: updatedTask.description,
+          priority: updatedTask.priority,
+          deadline: updatedTask.deadline,
+          status: updatedTask.status,
+          postCreatedAt: new Date(),
         },
       };
 
